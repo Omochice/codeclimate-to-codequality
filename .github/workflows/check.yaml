@@ -1,0 +1,147 @@
+name: Code check
+
+on:
+  push: null
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  path-filter:
+    timeout-minutes: 5
+    outputs:
+      # keep-sorted start
+      actions: ${{steps.changes.outputs.actions}}
+      go: ${{steps.changes.outputs.go}}
+      renovate: ${{steps.changes.outputs.renovate}}
+      # keep-sorted end
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: changes
+        with:
+          filters: |
+            actions:
+              - .github/workflows/*.yaml
+              - flake.nix
+              - flake.lock
+            go:
+              - ./**/*.go
+              - go.mod
+              - go.sum
+              - flake.nix
+              - flake.lock
+            renovate:
+              - renovate.json5
+  check-actions:
+    needs: path-filter
+    if: needs.path-filter.outputs.actions == 'true'
+    timeout-minutes: 5
+    name: Check github actions files
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix run .#check-actions
+  check-format:
+    timeout-minutes: 5
+    name: Check code format
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix flake check
+  build-snapshot:
+    timeout-minutes: 5
+    name: Build snapshot
+    needs: path-filter
+    if: needs.path-filter.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix develop --command goreleaser build --snapshot --clean
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          path: dist
+          retention-days: 7
+  check-renovate-config:
+    timeout-minutes: 5
+    name: Check renovate config format
+    needs: path-filter
+    if: needs.path-filter.outputs.renovate == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix run .#check-renovate-config
+  test-go:
+    timeout-minutes: 5
+    name: Build snapshot
+    needs: path-filter
+    if: needs.path-filter.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: nix develop --command go test ./...
+  status-check:
+    timeout-minutes: 5
+    name: Status Check
+    runs-on: ubuntu-latest
+    needs:
+      # keep-sorted start
+      - build-snapshot
+      - check-actions
+      - check-format
+      - check-renovate-config
+      - test-go
+      # keep-sorted end
+    permissions: {}
+    if: failure() || cancelled()
+    steps:
+      - run: exit 1
