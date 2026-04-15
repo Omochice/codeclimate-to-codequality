@@ -1,0 +1,174 @@
+{
+  description = "A Go command-line tool that converts CodeClimate JSON to GitLab Code Quality format";
+
+  nixConfig = {
+    extra-substituters = [
+      "https://omochice.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "omochice.cachix.org-1:d+cdfbGVPgtxxdGSkGf3hhaCdfziMtZ6FSHUWxwUTo8="
+    ];
+  };
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixpkgs-unstable";
+    nur-packages = {
+      url = "github:Omochice/nur-packages";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    flake-utils.url = "github:numtide/flake-utils";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nur-packages,
+      flake-utils,
+      treefmt-nix,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            nur-packages.overlays.default
+          ];
+        };
+        treefmt = treefmt-nix.lib.evalModule pkgs (
+          { ... }:
+          let
+            rumdlConfig = (pkgs.formats.toml { }).generate "rumdl.toml" {
+              # keep-sorted start
+              MD004.style = "dash";
+              MD007.indent = 4;
+              MD007.style = "fixed";
+              MD041.enabled = false;
+              MD049.style = "underscore";
+              MD050.style = "asterisk";
+              MD055.style = "leading-and-trailing";
+              MD060.enabled = true;
+              MD060.style = "aligned";
+              global."line-length" = 0;
+              # keep-sorted end
+            };
+          in
+          {
+            settings.global.excludes = [
+              "CHANGELOG.md"
+            ];
+            settings.formatter = {
+              # keep-sorted start block=yes
+              rumdl = {
+                command = "${pkgs.lib.getExe pkgs.rumdl}";
+                options = [
+                  "fmt"
+                  "--config"
+                  (toString rumdlConfig)
+                ];
+                includes = [ "*.md" ];
+              };
+              # keep-sorted end
+            };
+            programs = {
+              # keep-sorted start block=yes
+              formatjson5 = {
+                enable = true;
+                indent = 2;
+              };
+              gofmt.enable = true;
+              goimports.enable = true;
+              keep-sorted.enable = true;
+              nixfmt.enable = true;
+              yamlfmt = {
+                enable = true;
+                settings = {
+                  formatter = {
+                    type = "basic";
+                    retain_line_breaks_single = true;
+                    scan_folded_as_literal = true;
+                  };
+                };
+              };
+              # keep-sorted end
+            };
+          }
+        );
+        version = pkgs.lib.pipe ./.github/release-please-manifest.json [
+          builtins.readFile
+          builtins.fromJSON
+          (builtins.getAttr ".")
+        ];
+        runAs =
+          name: runtimeInputs: text:
+          let
+            program = pkgs.writeShellApplication {
+              inherit name runtimeInputs text;
+            };
+          in
+          {
+            type = "app";
+            program = "${program}/bin/${name}";
+          };
+        devPackages = rec {
+          actions = [
+            pkgs.actionlint
+            pkgs.ghalint
+            pkgs.zizmor
+          ];
+          default = actions ++ [
+            pkgs.go_1_26
+            pkgs.goreleaser
+            treefmt.config.build.wrapper
+          ];
+        };
+      in
+      {
+        # keep-sorted start block=yes
+        apps = {
+          check-actions = pkgs.lib.pipe ''
+            actionlint
+            ghalint run
+            zizmor .github/workflows
+          '' [ (runAs "check-actions" devPackages.actions) ];
+          # NOTE: package `renovate` 43.4.0 is broken on aarch64, so we stop to include its in devShells.
+          check-renovate-config = pkgs.lib.pipe ''
+            renovate-config-validator --strict
+          '' [ (runAs "check-actions" [ pkgs.renovate ]) ];
+        };
+        checks = {
+          formatting = treefmt.config.build.check self;
+        };
+        devShells = pkgs.lib.pipe devPackages [
+          (pkgs.lib.attrsets.mapAttrs (name: buildInputs: pkgs.mkShell { inherit buildInputs; }))
+        ];
+        formatter = treefmt.config.build.wrapper;
+        packages = {
+          default = pkgs.buildGo126Module {
+            #keep-sorted start block=yes
+            env.CGO_ENABLED = 0;
+            ldflags = [
+              "-s"
+              "-w"
+              "-X main.version=${version}"
+            ];
+            meta.description = "A Go command-line tool that converts CodeClimate JSON to GitLab Code Quality format";
+            meta.homepage = "https://github.com/Omochice/codeclimate-to-codequality";
+            meta.license = pkgs.lib.licenses.zlib;
+            pname = "codeclimate-to-codequality";
+            src = ./.;
+            vendorHash = "sha256-x0Xzh7SYDE4mSwTl2XFHeZ+CqB6hzzeJcwNXYMEo6q0=";
+            version = version;
+            #keep-sorted end
+          };
+        };
+        # keep-sorted end
+      }
+    );
+}
