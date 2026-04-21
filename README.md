@@ -51,12 +51,12 @@ codequality:
 
 CodeClimate severity levels are mapped to GitLab severity levels:
 
-- **blocker** -> `critical`
-- **critical** -> `critical`
-- **major** -> `major`
-- **minor** -> `minor`
-- **info** -> `info`
-- Unknown -> `info`
+- blocker: `critical`
+- critical: `critical`
+- major: `major`
+- minor: `minor`
+- info: `info`
+- Unknown: `info`
 
 ### Skipped Issues
 
@@ -72,10 +72,6 @@ Issues that lack any of the following required fields are skipped:
 
 - `0`: Success
 - `1`: Error (invalid JSON, I/O error, etc.)
-
-## Requirements
-
-- Go 1.25 or later
 
 ## License
 
