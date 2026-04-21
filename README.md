@@ -1,25 +1,11 @@
 # codeclimate-to-codequality
 
-A Go command-line tool that converts [CodeClimate](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md) JSON output to [GitLab Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html) format.
-
-## Overview
-
-This tool reads CodeClimate JSON output from a file or stdin and outputs GitLab Code Quality JSON format to standard output, making it easy to integrate any CodeClimate-compatible analyzer into GitLab CI/CD pipelines.
+A Go command-line tool that converts [CodeClimate](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md) JSON output to [GitLab Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html) format. It reads from a file or stdin and writes to standard output, making it easy to integrate any CodeClimate-compatible analyzer into GitLab CI/CD pipelines.
 
 ## Installation
 
-### From Source
-
 ```bash
 go install github.com/Omochice/codeclimate-to-codequality@latest
-```
-
-### Build Locally
-
-```bash
-git clone https://github.com/Omochice/codeclimate-to-codequality.git
-cd codeclimate-to-codequality
-go build
 ```
 
 ## Usage
@@ -86,12 +72,6 @@ Issues that lack any of the following required fields are skipped:
 
 - `0`: Success
 - `1`: Error (invalid JSON, I/O error, etc.)
-
-## Error Handling
-
-- Invalid or missing required fields in CodeClimate issues are skipped
-- Error messages are written to standard error
-- Empty issue arrays produce valid empty GitLab Code Quality output
 
 ## Requirements
 
