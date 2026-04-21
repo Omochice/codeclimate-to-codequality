@@ -80,4 +80,3 @@ Issues that lack any of the following required fields are skipped:
 ## License
 
 [zlib](./LICENSE)
-
