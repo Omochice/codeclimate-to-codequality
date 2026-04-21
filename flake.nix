@@ -163,7 +163,7 @@
             meta.license = pkgs.lib.licenses.zlib;
             pname = "codeclimate-to-codequality";
             src = ./.;
-            vendorHash = "sha256-x0Xzh7SYDE4mSwTl2XFHeZ+CqB6hzzeJcwNXYMEo6q0=";
+            vendorHash = "sha256-W6XVd68MS0ungMgam8jefYMVhyiN6/DB+bliFzs2rdk=";
             version = version;
             #keep-sorted end
           };
