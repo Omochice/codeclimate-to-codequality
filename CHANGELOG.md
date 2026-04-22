@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/Omochice/codeclimate-to-codequality/compare/v1.0.0...v1.0.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* parse null-byte delimited CodeClimate format ([#11](https://github.com/Omochice/codeclimate-to-codequality/issues/11)) ([73287d1](https://github.com/Omochice/codeclimate-to-codequality/commit/73287d179b7933ad158eb2bd38691e9caa5bdf6f))
+
 ## 1.0.0 (2026-04-21)
 
 
