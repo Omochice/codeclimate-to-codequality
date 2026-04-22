@@ -31,7 +31,7 @@ func TestHandleError(t *testing.T) {
 
 func TestEndToEnd(t *testing.T) {
 	t.Run("reads from stdin when source is dash", func(t *testing.T) {
-		input := `[{"type":"issue","check_name":"test-check","description":"test description","severity":"blocker","fingerprint":"fp1","location":{"path":"app/models/user.rb","lines":{"begin":42}}}]`
+		input := `{"type":"issue","check_name":"test-check","description":"test description","severity":"blocker","fingerprint":"fp1","location":{"path":"app/models/user.rb","lines":{"begin":42}}}`
 
 		var stdout, stderr bytes.Buffer
 		inout := &cli.ProcInout{
@@ -64,7 +64,7 @@ func TestEndToEnd(t *testing.T) {
 	})
 
 	t.Run("reads from file when source is a file path", func(t *testing.T) {
-		content := `[{"type":"issue","check_name":"file-check","description":"file issue","severity":"major","fingerprint":"fp2","location":{"path":"app/views/index.erb","lines":{"begin":10}}}]`
+		content := `{"type":"issue","check_name":"file-check","description":"file issue","severity":"major","fingerprint":"fp2","location":{"path":"app/views/index.erb","lines":{"begin":10}}}`
 		dir := t.TempDir()
 		path := filepath.Join(dir, "report.json")
 		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
@@ -89,8 +89,8 @@ func TestEndToEnd(t *testing.T) {
 		}
 	})
 
-	t.Run("handles empty array with dash", func(t *testing.T) {
-		input := `[]`
+	t.Run("handles empty input with dash", func(t *testing.T) {
+		input := ``
 
 		var stdout, stderr bytes.Buffer
 		inout := &cli.ProcInout{
@@ -177,7 +177,7 @@ func TestEndToEnd(t *testing.T) {
 	})
 
 	t.Run("maps blocker severity to critical", func(t *testing.T) {
-		input := `[{"type":"issue","check_name":"blocker-check","description":"blocker issue","severity":"blocker","fingerprint":"fp-blocker","location":{"path":"a.rb","lines":{"begin":1}}}]`
+		input := `{"type":"issue","check_name":"blocker-check","description":"blocker issue","severity":"blocker","fingerprint":"fp-blocker","location":{"path":"a.rb","lines":{"begin":1}}}`
 
 		var stdout, stderr bytes.Buffer
 		inout := &cli.ProcInout{
@@ -199,7 +199,7 @@ func TestEndToEnd(t *testing.T) {
 	})
 
 	t.Run("uses positions when lines is absent", func(t *testing.T) {
-		input := `[{"type":"issue","check_name":"pos-check","description":"pos issue","severity":"minor","fingerprint":"fp-pos","location":{"path":"b.rb","positions":{"begin":{"line":7,"column":3}}}}]`
+		input := `{"type":"issue","check_name":"pos-check","description":"pos issue","severity":"minor","fingerprint":"fp-pos","location":{"path":"b.rb","positions":{"begin":{"line":7,"column":3}}}}`
 
 		var stdout, stderr bytes.Buffer
 		inout := &cli.ProcInout{

@@ -1,6 +1,6 @@
 # codeclimate-to-codequality
 
-A Go command-line tool that converts [CodeClimate](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md) JSON output to [GitLab Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html) format. It reads from a file or stdin and writes to standard output, making it easy to integrate any CodeClimate-compatible analyzer into GitLab CI/CD pipelines.
+A Go command-line tool that converts [CodeClimate](https://github.com/codeclimate/platform/blob/master/spec/analyzers/SPEC.md) null-byte delimited output to [GitLab Code Quality](https://docs.gitlab.com/ee/ci/testing/code_quality.html) JSON format. It reads from a file or stdin and writes to standard output, making it easy to integrate any CodeClimate-compatible analyzer into GitLab CI/CD pipelines.
 
 ## Installation
 
@@ -13,7 +13,7 @@ go install github.com/Omochice/codeclimate-to-codequality@latest
 The tool requires exactly one argument: a file path or `-` for stdin.
 
 ```bash
-codeclimate-to-codequality report.json > codequality.json
+codeclimate-to-codequality report.codeclimate > codequality.json
 some-analyzer --format=codeclimate | codeclimate-to-codequality - > codequality.json
 ```
 
@@ -25,10 +25,10 @@ some-analyzer --format=codeclimate | codeclimate-to-codequality - > codequality.
 analyze:
   stage: test
   script:
-    - some-analyzer --format=codeclimate -o codeclimate-report.json
+    - some-analyzer --format=codeclimate -o codeclimate-report.codeclimate
   artifacts:
     paths:
-      - codeclimate-report.json
+      - codeclimate-report.codeclimate
     when: always
 
 codequality:
@@ -39,7 +39,7 @@ codequality:
       artifacts: true
   when: always
   script:
-    - codeclimate-to-codequality codeclimate-report.json > codequality.json
+    - codeclimate-to-codequality codeclimate-report.codeclimate > codequality.json
   artifacts:
     reports:
       codequality: codequality.json

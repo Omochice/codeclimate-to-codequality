@@ -1,6 +1,7 @@
 package codeclimate
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 )
@@ -36,17 +37,27 @@ type Position struct {
 	Column int `json:"column,omitempty"`
 }
 
-// Parse decodes a CodeClimate JSON array from r.
+// Parse decodes null-byte delimited CodeClimate JSON from r.
 func Parse(r io.Reader) ([]Issue, error) {
-	var issues []Issue
-
-	decoder := json.NewDecoder(r)
-	if err := decoder.Decode(&issues); err != nil {
+	data, err := io.ReadAll(r)
+	if err != nil {
 		return nil, err
 	}
 
-	if issues == nil {
-		issues = []Issue{}
+	segments := bytes.Split(data, []byte{0})
+	issues := make([]Issue, 0, len(segments))
+
+	for _, seg := range segments {
+		seg = bytes.TrimSpace(seg)
+		if len(seg) == 0 {
+			continue
+		}
+
+		var issue Issue
+		if err := json.Unmarshal(seg, &issue); err != nil {
+			return nil, err
+		}
+		issues = append(issues, issue)
 	}
 
 	return issues, nil
