@@ -61,10 +61,3 @@ The `location` field supports two variants.
 ```
 
 Line numbers are 1-based.
-
-## Difference from GitLab Code Quality
-
-GitLab Code Quality expects a single JSON array as an artifact file, not null-byte delimited objects.
-This tool bridges the gap by reading CodeClimate engine output and producing GitLab Code Quality JSON array output.
-
-Reference: [GitLab Code Quality](https://docs.gitlab.com/ci/testing/code_quality/)
