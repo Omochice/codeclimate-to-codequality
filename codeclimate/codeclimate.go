@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"strings"
 )
 
 type Issue struct {
@@ -46,16 +45,16 @@ func Parse(r io.Reader) ([]Issue, error) {
 	}
 
 	segments := bytes.Split(data, []byte{0})
-	issues := []Issue{}
+	issues := make([]Issue, 0, len(segments))
 
 	for _, seg := range segments {
-		s := strings.TrimSpace(string(seg))
-		if s == "" {
+		seg = bytes.TrimSpace(seg)
+		if len(seg) == 0 {
 			continue
 		}
 
 		var issue Issue
-		if err := json.Unmarshal([]byte(s), &issue); err != nil {
+		if err := json.Unmarshal(seg, &issue); err != nil {
 			return nil, err
 		}
 		issues = append(issues, issue)
